@@ -1,6 +1,7 @@
 require('dotenv').config();
 const convert = require("xml-js");
 const axios = require("axios");
+const ussdCache = new Cache({ stdTTL: 60, deleteOnExpire: true, checkperiod: 30 });
 
 let options = {compact: true, ignoreComment: true, spaces: 4};
 let message = "";
@@ -47,7 +48,12 @@ module.exports.index = async (req, res) => {
 
 module.exports.checkBill = async (req, res) => {
 
-    const userEntry = req.headers["user-entry"]; // You know how this value will be passed from their system to ours. We assume it will passed as header parameter. 
+    const userMsisdn = req.headers["user-msisdn"]; // You don't know how this value will be passed from their system to ours. We assume it will passed as header parameter. 
+    const userEntry = req.headers["user-entry"]; // You don't know how this value will be passed from their system to ours. We assume it will passed as header parameter. 
+
+   // Set the value in cache. 
+   ussdCache.set(userMsisdn, userEntry);
+    
     try {
         const response = await axios.get(`https://core.diool.com/core/onlinepayment/v1/payment/${userEntry}`, {
             headers: {
